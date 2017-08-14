@@ -20,21 +20,51 @@ int name_arr_temp[] = {
 BatteryInterface::BatteryInterface(const char *dev)
 {
 	connect_battery_flag = 0;
+	struct termios tio;
 	fd = opendev(dev);
-	if (fd > 0) {
-		set_speed(fd, 9600);
-	}
-	else {
-		fprintf(stderr, "Error opening %s: %s\n", dev, strerror(errno));
-		return;
-	}
 
-	if (set_parity(fd, 8, 1, 'N') == FALSE) {
-		fprintf(stderr, "Set Parity Error\n");
-		close(fd);
-	}
-	//init mutex
-	pthread_mutex_init(&RW_mutex, NULL);
+	//if (fd > 0){
+
+	//	if (tcgetattr(fd, &tio) < 0)
+	//	{
+	//		printf("get setting error!\r");
+	//		return;
+	//	}
+
+
+	//	tio.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
+	//	tio.c_oflag &= ~OPOST;
+	//	tio.c_cflag |= CLOCAL | CREAD;
+	//	tio.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
+
+	//	tio.c_cc[VMIN] = 2;
+	//	tio.c_cc[VTIME] = 0;
+	//	cfsetospeed(&tio, B9600);            // 115200 baud
+	//	cfsetispeed(&tio, B9600);            // 115200 baud
+	//	tcsetattr(fd, TCSANOW, &tio);
+	//	tcflush(fd, TCIFLUSH);
+
+		if (fd > 0) {
+			set_speed(fd, 9600);
+			}
+			else {
+			fprintf(stderr, "Error opening %s: %s\n", dev, strerror(errno));
+			return;
+			}
+
+			if (set_parity(fd, 8, 1, 'N') == FALSE) {
+			fprintf(stderr, "Set Parity Error\n");
+			close(fd);
+			}
+		//init mutex
+		pthread_mutex_init(&RW_mutex, NULL);
+	//}
+	//else{
+
+	//	fprintf(stderr, "Error opening %s: %s\n", dev, strerror(errno));
+	//	return;
+
+	//}
 
 }
 
@@ -148,12 +178,16 @@ int BatteryInterface::set_parity(int fd, int databits, int stopbits, int parity)
 	/* Set input parity option */
 	if (parity != 'n')
 		options.c_iflag |= INPCK;
-	options.c_cc[VTIME] = 20; // 5 seconds
+	options.c_cc[VTIME] = 20; // 2 seconds
 	options.c_cc[VMIN] = 0;
 
 	options.c_lflag &= ~(ECHO | ICANON);
 
-	options.c_lflag &= ~(ICRNL | IXON);//解决二进制0x0d、0x11、0x13被丢失问题
+	options.c_oflag &= ~OPOST;
+
+	options.c_cflag |= CLOCAL | CREAD;
+
+	options.c_iflag &= ~(BRKINT | ISTRIP | ICRNL | IXON);//解决二进制0x0d、0x11、0x13等被丢失问题
 
 	tcflush(fd, TCIFLUSH); /* Update the options and do it NOW */
 	if (tcsetattr(fd, TCSANOW, &options) != 0) {
@@ -193,7 +227,7 @@ unsigned int BatteryInterface::get_powertype()
 {
 	if (!connect_battery_flag)return 0xFFFF;
 	int nread;			/* Read the counts of data */
-	char buff[10];		/* Recvice data buffer */
+	unsigned char buff[10];		/* Recvice data buffer */
 	bzero(buff, 10);
 	static unsigned int return_value = 0;
 	int cmd = 0;
@@ -222,7 +256,7 @@ unsigned int BatteryInterface::get_percentage_of_remaining_power()
 {	
 	if (!connect_battery_flag)return 0xFFFF;
 	int nread;			/* Read the counts of data */
-	char buff[10];		/* Recvice data buffer */
+	unsigned char buff[10];		/* Recvice data buffer */
 	bzero(buff, 10);
 	float temp = 0;
 	static int return_value = 0;
@@ -272,7 +306,7 @@ unsigned int BatteryInterface::get_remaining_time()
 {
 	if (!connect_battery_flag)return 0xFFFF;
 	int nread;			/* Read the counts of data */
-	char buff[10];		/* Recvice data buffer */
+	unsigned char buff[10];		/* Recvice data buffer */
 	bzero(buff, 10);
 	static unsigned int return_value = 0;
 	unsigned int average_time_to_empty = 0;

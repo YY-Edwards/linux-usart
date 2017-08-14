@@ -6,8 +6,8 @@
 */
 #include "Battery_info.h"
 #include <string>
-
-std::string STTY_DEV = "/dev/ttySP0";
+std::string STTY_DEV = "/dev/ttyS1";
+//std::string STTY_DEV = "/dev/ttySP0";
 
 /*
 *@breif  main()
