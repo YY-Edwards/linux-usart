@@ -20,51 +20,21 @@ int name_arr_temp[] = {
 BatteryInterface::BatteryInterface(const char *dev)
 {
 	connect_battery_flag = 0;
-	struct termios tio;
 	fd = opendev(dev);
+	if (fd > 0) {
+		set_speed(fd, 9600);
+	}
+	else {
+		fprintf(stderr, "Error opening %s: %s\n", dev, strerror(errno));
+		return;
+	}
 
-	//if (fd > 0){
-
-	//	if (tcgetattr(fd, &tio) < 0)
-	//	{
-	//		printf("get setting error!\r");
-	//		return;
-	//	}
-
-
-	//	tio.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
-	//	tio.c_oflag &= ~OPOST;
-	//	tio.c_cflag |= CLOCAL | CREAD;
-	//	tio.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
-
-	//	tio.c_cc[VMIN] = 2;
-	//	tio.c_cc[VTIME] = 0;
-	//	cfsetospeed(&tio, B9600);            // 115200 baud
-	//	cfsetispeed(&tio, B9600);            // 115200 baud
-	//	tcsetattr(fd, TCSANOW, &tio);
-	//	tcflush(fd, TCIFLUSH);
-
-		if (fd > 0) {
-			set_speed(fd, 9600);
-			}
-			else {
-			fprintf(stderr, "Error opening %s: %s\n", dev, strerror(errno));
-			return;
-			}
-
-			if (set_parity(fd, 8, 1, 'N') == FALSE) {
-			fprintf(stderr, "Set Parity Error\n");
-			close(fd);
-			}
-		//init mutex
-		pthread_mutex_init(&RW_mutex, NULL);
-	//}
-	//else{
-
-	//	fprintf(stderr, "Error opening %s: %s\n", dev, strerror(errno));
-	//	return;
-
-	//}
+    if (set_parity(fd, 8, 1, 'N') == MC_FALSE) {
+		fprintf(stderr, "Set Parity Error\n");
+		close(fd);
+	}
+	//init mutex
+	pthread_mutex_init(&RW_mutex, NULL);
 
 }
 
@@ -82,7 +52,7 @@ int BatteryInterface::opendev(const char *dev)
 {
 	char *device = (char *)dev;
 	int fd = open(device, O_RDWR);         //| O_NOCTTY | O_NDELAY
-	if (-1 == fd) { /*设置数据位数*/
+	if (-1 == fd) { /*\C9\E8\D6\C3\CA\FD\BE\DD位\CA\FD*/
 		perror("Can't Open Serial Port");
 		return -1;
 	}
@@ -122,10 +92,10 @@ int BatteryInterface::set_parity(int fd, int databits, int stopbits, int parity)
 	struct termios options;
 	if (tcgetattr(fd, &options) != 0) {
 		perror("SetupSerial 1");
-		return(FALSE);
+        return(MC_FALSE);
 	}
 	options.c_cflag &= ~CSIZE;
-	switch (databits) /*设置数据位数*/ {
+	switch (databits) /*\C9\E8\D6\C3\CA\FD\BE\DD位\CA\FD*/ {
 	case 7:
 		options.c_cflag |= CS7;
 		break;
@@ -134,7 +104,7 @@ int BatteryInterface::set_parity(int fd, int databits, int stopbits, int parity)
 		break;
 	default:
 		fprintf(stderr, "Unsupported data size\n");
-		return (FALSE);
+        return (MC_FALSE);
 	}
 
 	switch (parity) {
@@ -145,13 +115,13 @@ int BatteryInterface::set_parity(int fd, int databits, int stopbits, int parity)
 		break;
 	case 'o':
 	case 'O':
-		options.c_cflag |= (PARODD | PARENB);  /* 设置为奇效验*/
+		options.c_cflag |= (PARODD | PARENB);  /* \C9\E8\D6\C3为\C6\E6效\D1\E9*/
 		options.c_iflag |= INPCK;             /* Disnable parity checking */
 		break;
 	case 'e':
 	case 'E':
 		options.c_cflag |= PARENB;     /* Enable parity */
-		options.c_cflag &= ~PARODD;   /* 转换为偶效验*/
+		options.c_cflag &= ~PARODD;   /* 转\BB\BB为偶效\D1\E9*/
 		options.c_iflag |= INPCK;       /* Disnable parity checking */
 		break;
 	case 'S':
@@ -161,9 +131,9 @@ int BatteryInterface::set_parity(int fd, int databits, int stopbits, int parity)
 		break;
 	default:
 		fprintf(stderr, "Unsupported parity\n");
-		return (FALSE);
+        return (MC_FALSE);
 	}
-	/* 设置停止位*/
+	/* \C9\E8\D6\C3停止位*/
 	switch (stopbits) {
 	case 1:
 		options.c_cflag &= ~CSTOPB;
@@ -173,28 +143,28 @@ int BatteryInterface::set_parity(int fd, int databits, int stopbits, int parity)
 		break;
 	default:
 		fprintf(stderr, "Unsupported stop bits\n");
-		return (FALSE);
+        return (MC_FALSE);
 	}
 	/* Set input parity option */
 	if (parity != 'n')
 		options.c_iflag |= INPCK;
-	options.c_cc[VTIME] = 20; // 2 seconds
+	options.c_cc[VTIME] = 20; // 5 seconds
 	options.c_cc[VMIN] = 0;
-
+	
 	options.c_lflag &= ~(ECHO | ICANON);
 
 	options.c_oflag &= ~OPOST;
 
 	options.c_cflag |= CLOCAL | CREAD;
 
-	options.c_iflag &= ~(BRKINT | ISTRIP | ICRNL | IXON);//解决二进制0x0d、0x11、0x13等被丢失问题
+	options.c_iflag &= ~(BRKINT | ISTRIP | ICRNL | IXON);//\BD\E2\B6\FE\BD\F80d\A1\A20x11\A1\A20x13\B5\BF\BB\B6\AA\BF\CE\CC	
 
 	tcflush(fd, TCIFLUSH); /* Update the options and do it NOW */
 	if (tcsetattr(fd, TCSANOW, &options) != 0) {
 		perror("SetupSerial 3");
-		return (FALSE);
+        return (MC_FALSE);
 	}
-	return (TRUE);
+    return (MC_TRUE);
 
 
 }
@@ -202,7 +172,7 @@ int BatteryInterface::set_parity(int fd, int databits, int stopbits, int parity)
 bool BatteryInterface::connect_battery()
 {
 	int nread;			/* Read the counts of data */
-	char buff[10];		/* Recvice data buffer */
+    unsigned char buff[10];		/* Recvice data buffer */
 	bzero(buff, 10);
 
 	write(fd, connect_arr, sizeof(connect_arr));
@@ -227,7 +197,7 @@ unsigned int BatteryInterface::get_powertype()
 {
 	if (!connect_battery_flag)return 0xFFFF;
 	int nread;			/* Read the counts of data */
-	unsigned char buff[10];		/* Recvice data buffer */
+    unsigned char buff[10];		/* Recvice data buffer */
 	bzero(buff, 10);
 	static unsigned int return_value = 0;
 	int cmd = 0;
@@ -237,10 +207,10 @@ unsigned int BatteryInterface::get_powertype()
 	write(fd, &cmd, 1);
 	nread = read(fd, buff, 2);
 	pthread_mutex_unlock(&RW_mutex);
-	if (nread <= 0){//切换的时候会响应缓慢
+	if (nread <= 0){//\C7谢\BB\B5\C4时\BA\F2\BB\E1\CF\EC应\BB\BA\C2\FD
 		//perror("err read data:");
 		//fprintf(stderr, "read length:%d\n", nread);
-		return (return_value);//返回上一次的值
+		return (return_value);//\B7\B5\BB\D8\C9\CF一\B4蔚\C4值
 	}
 	else{
 
@@ -253,26 +223,28 @@ unsigned int BatteryInterface::get_powertype()
 }
 
 unsigned int BatteryInterface::get_percentage_of_remaining_power()
-{	
-	if (!connect_battery_flag)return 0xFFFF;
+{
+    if (!connect_battery_flag)return 0xFFFF;
 	int nread;			/* Read the counts of data */
-	unsigned char buff[10];		/* Recvice data buffer */
+    unsigned char buff[10];		/* Recvice data buffer */
 	bzero(buff, 10);
 	float temp = 0;
-	static int return_value = 0;
+    static unsigned int return_value = 0;
+    static unsigned int get_value = 0;
 	unsigned int full_capatity_value = 0;
 	unsigned int remaining_capatity_value = 0;
 	int cmd = 0;
+    static unsigned int first_read_flag  = 1;
 
 	cmd = FULLCAPATIY_CMD;
 	pthread_mutex_lock(&RW_mutex);
 	write(fd, &cmd, 1);
-	nread = read(fd, buff, 2);
+    nread = read(fd, buff, 2);//
 	pthread_mutex_unlock(&RW_mutex);
 	if (nread <= 0){
-		//perror("err read data:");
-		//fprintf(stderr, "read length:%d\n", nread);
-		return (return_value);//返回上一次的值
+        perror("1-err read data:");
+        fprintf(stderr, "read length:%d\n", nread);
+		return (return_value);//\B7\B5\BB\D8\C9\CF一\B4蔚\C4值
 	}
 	else{
 		full_capatity_value = ((buff[1] << 8) | buff[0]);
@@ -282,19 +254,34 @@ unsigned int BatteryInterface::get_percentage_of_remaining_power()
 		nread = read(fd, &buff[2], 2);
 		pthread_mutex_unlock(&RW_mutex);
 		if (nread <= 0){
-			//perror("err read data:");
-			//fprintf(stderr, "read length:%d\n", nread);
-			return (return_value);//返回上一次的值
+            perror("2-err read data:");
+            fprintf(stderr, "read length:%d\n", nread);
+			return (return_value);//\B7\B5\BB\D8\C9\CF一\B4蔚\C4值
 		}
 		else{
 			remaining_capatity_value = ((buff[3] << 8) | buff[2]);
-			//fprintf(stderr, "full_capatity_value: 0x%04x, %d mah\n", full_capatity_value, full_capatity_value);
-			//fprintf(stderr, "remaining_capatity_value: 0x%04x, %d mah\n", remaining_capatity_value, remaining_capatity_value);
+           //
+            //fprintf(stderr, "full_capatity_value: 0x%04x, %d mah\n", full_capatity_value, full_capatity_value);
+           // fprintf(stderr, "remaining_capatity_value: 0x%04x, %d mah\n", remaining_capatity_value, remaining_capatity_value);
 
 			temp = (float)remaining_capatity_value / (float)full_capatity_value;
-			//fprintf(stderr, "remaining_percentage: %f %\n", temp*100);
-			return_value = (int)(temp * 100);
-			return return_value;
+            //fprintf(stderr, "remaining_percentage: %f %\n", temp*100);
+            get_value = (unsigned int)(temp * 100);
+             if(!first_read_flag){
+                    if((get_value>(return_value + 10))||(get_value < (return_value/2))){
+                        return return_value;
+                    }
+                    else{
+                        return_value = get_value;
+                        return return_value;
+                    }
+              }
+             else{
+                first_read_flag = 0;
+                return_value = get_value;
+                return return_value;
+             }
+			
 
 		}
 
@@ -306,7 +293,7 @@ unsigned int BatteryInterface::get_remaining_time()
 {
 	if (!connect_battery_flag)return 0xFFFF;
 	int nread;			/* Read the counts of data */
-	unsigned char buff[10];		/* Recvice data buffer */
+    unsigned char buff[10];		/* Recvice data buffer */
 	bzero(buff, 10);
 	static unsigned int return_value = 0;
 	unsigned int average_time_to_empty = 0;
@@ -320,7 +307,7 @@ unsigned int BatteryInterface::get_remaining_time()
 	if (nread <= 0){
 		//perror("err read data:");
 		//fprintf(stderr, "read length:%d\n", nread);
-		return (return_value);//返回上一次的值
+		return (return_value);//\B7\B5\BB\D8\C9\CF一\B4蔚\C4值
 	}
 	else{
 		average_time_to_empty = ((buff[1] << 8) | buff[0]);
