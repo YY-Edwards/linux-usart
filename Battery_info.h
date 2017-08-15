@@ -13,8 +13,8 @@
 #include <time.h>
 #include <pthread.h>
 
-#define FALSE 0
-#define TRUE 1
+#define MC_FALSE 0
+#define MC_TRUE 1
 
 #define POWERTYPE_CMD			0xA2
 #define FULLCAPATIY_CMD			0x10
