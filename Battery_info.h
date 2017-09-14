@@ -53,10 +53,22 @@ public:
 	获取电池可使用时间接口(minute)
 	*/
 	unsigned int get_remaining_time();
-
+	
+	/*
+	测试用
+	*/
+	unsigned int get_no_data_err_count(){return no_data_err_counter;};
+	
+	/*
+	测试用
+	*/
+	unsigned int get_percent_err_count(){return percent_err_counter;};
 
 private:
-
+	
+	unsigned int no_data_err_counter;
+	unsigned int percent_err_counter;
+	
 	int  fd;
 	int connect_battery_flag;
 
@@ -84,3 +96,6 @@ private:
 };
 
 #endif 
+
+
+
