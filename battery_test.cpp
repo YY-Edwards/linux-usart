@@ -10,7 +10,7 @@
 #define Charging 		0xB000
 #define External_Power 	0x3000
 
-std::string STTY_DEV = "/dev/ttyS2";
+std::string STTY_DEV = "/dev/ttyS2";//根据实际硬件调整即可
 //std::string STTY_DEV = "/dev/ttySP0";
 
 /*
