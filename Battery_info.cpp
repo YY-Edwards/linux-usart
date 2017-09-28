@@ -8,6 +8,7 @@
 * 2.去掉特殊字符
 * 3.读写前清空缓冲区数据
 * 4.异常数据过滤
+* 5.修复电量低于10%时反馈数据异常bug
 */
 #include "Battery_info.h"
 int speed_arr_temp[] = {
@@ -387,7 +388,7 @@ unsigned int BatteryInterface::get_percentage_of_remaining_power()
 	fprintf(stderr, "remaining_percentage: %f \n", temp*100);
 	get_value = (unsigned int)(temp * 100);
 	 if(!first_read_flag){
-			if((get_value>(return_value + 10))||(get_value < (return_value - 10))){
+		 if (abs((int)get_value - (int)return_value) >= 3){
 				percent_err_counter++;
 				return return_value;
 			}

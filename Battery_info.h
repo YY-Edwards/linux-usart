@@ -12,6 +12,7 @@
 #include <string.h>
 #include <time.h>
 #include <pthread.h>
+#include <math.h>
 
 #define MC_FALSE 0
 #define MC_TRUE 1
