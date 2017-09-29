@@ -69,10 +69,8 @@ int main(int argc, char *argv[])
 			//建议在UI显示之前，先做数据判断，与上一次获取的值作比较，差值较大则忽略本次获取的数据。
 			//另外建议状态值及百分比比值用缓冲队列缓冲数据。
 			
-			if(type == External_Power)percent =100;
-			else{
-				percent = my_battery->get_percentage_of_remaining_power();
-			}
+
+			percent = my_battery->get_percentage_of_remaining_power();
 			fprintf(stderr, "Remaining power is : %d \n", percent);
 			
 			

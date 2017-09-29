@@ -9,6 +9,7 @@
 * 3.读写前清空缓冲区数据
 * 4.异常数据过滤
 * 5.修复电量低于10%时反馈数据异常bug
+* 6.修复充电过程中装卸电池后，电量反馈数据异常bug
 */
 #include "Battery_info.h"
 int speed_arr_temp[] = {
@@ -384,6 +385,10 @@ unsigned int BatteryInterface::get_percentage_of_remaining_power()
 	fprintf(stderr, "full_capatity_value: 0x%04x, %d mah\n", full_capatity_value, full_capatity_value);
 	fprintf(stderr, "remaining_capatity_value: 0x%04x, %d mah\n", remaining_capatity_value, remaining_capatity_value);
 
+	if (full_capatity_value == 0xFFFF && full_capatity_value == remaining_capatity_value){
+		first_read_flag = 1;
+		return 100;
+	}
 	temp = (float)remaining_capatity_value / (float)full_capatity_value;
 	fprintf(stderr, "remaining_percentage: %f \n", temp*100);
 	get_value = (unsigned int)(temp * 100);
