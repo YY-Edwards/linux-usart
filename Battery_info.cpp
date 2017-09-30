@@ -29,6 +29,11 @@ BatteryInterface::BatteryInterface(const char *dev)
 	connect_battery_flag = 0;
 	no_data_err_counter = 0;
 	percent_err_counter =0;
+
+	power_type = Battery;
+
+	battery_capatity = 0x0000;
+
 	struct termios tio;
 	fd = opendev(dev);
 	
@@ -303,6 +308,9 @@ unsigned int BatteryInterface::get_powertype()
 	}
 	//fprintf(stderr, "buff[0]: 0x%02x, buff[1]:0x%02x\n", buff[0], buff[1]);
 	return_value = ((buff[1] << 8) | buff[0]);
+
+	power_type = return_value;//get power type
+
 	return (return_value);
 	
 /*
@@ -365,6 +373,7 @@ unsigned int BatteryInterface::get_percentage_of_remaining_power()
 		}
 	}
 	full_capatity_value = ((buff[1] << 8) | buff[0]);
+	battery_capatity = full_capatity_value;//get battery capatity
 	
 	tcflush(fd, TCIOFLUSH);
 	usleep(500000);
@@ -387,12 +396,15 @@ unsigned int BatteryInterface::get_percentage_of_remaining_power()
 
 	if (full_capatity_value == 0xFFFF && full_capatity_value == remaining_capatity_value){
 		first_read_flag = 1;
-		return 100;
+		if (power_type == Charging)
+			return return_value;
+		else
+			return 100;
 	}
 	temp = (float)remaining_capatity_value / (float)full_capatity_value;
 	fprintf(stderr, "remaining_percentage: %f \n", temp*100);
 	get_value = (unsigned int)(temp * 100);
-	 if(!first_read_flag){
+	 if((!first_read_flag) && (battery_capatity == full_capatity_value)){//不是第一次获取电量，且总容值稳定
 		 if (abs((int)get_value - (int)return_value) >= 3){
 				percent_err_counter++;
 				return return_value;

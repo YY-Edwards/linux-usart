@@ -22,6 +22,10 @@
 #define REMAININGCAPATIY_CMD	0x0F
 #define AVERAGETIMETOEMPTY_CMD	0x12
 
+#define Battery 				0xA000
+#define Charging 				0xB000
+#define External_Power 			0x3000
+
 
 const char connect_arr[] = { 0xAA, 0x2A, 0x98, 0x01, 0x01, 0xA1 };
 
@@ -69,7 +73,10 @@ private:
 	
 	unsigned int no_data_err_counter;
 	unsigned int percent_err_counter;
-	
+
+	unsigned int power_type;
+	unsigned int battery_capatity;
+
 	int  fd;
 	int connect_battery_flag;
 
