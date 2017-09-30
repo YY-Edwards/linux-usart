@@ -373,7 +373,6 @@ unsigned int BatteryInterface::get_percentage_of_remaining_power()
 		}
 	}
 	full_capatity_value = ((buff[1] << 8) | buff[0]);
-	battery_capatity = full_capatity_value;//get battery capatity
 	
 	tcflush(fd, TCIOFLUSH);
 	usleep(500000);
@@ -417,6 +416,7 @@ unsigned int BatteryInterface::get_percentage_of_remaining_power()
 	 else{
 		first_read_flag = 0;
 		return_value = get_value;
+		battery_capatity = full_capatity_value;//get battery capatity
 		return return_value;
 	 }
 	

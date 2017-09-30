@@ -7,7 +7,7 @@
 #include "Battery_info.h"
 #include <string>
 
-std::string STTY_DEV = "/dev/ttyS2";//根据实际硬件调整即可
+std::string STTY_DEV = "/dev/ttyS0";//根据实际硬件调整即可
 //std::string STTY_DEV = "/dev/ttySP0";
 
 /*
